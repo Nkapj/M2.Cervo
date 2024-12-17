@@ -1,150 +1,166 @@
-
 import { useState, useEffect } from "react";
 import { FaTrashAlt } from "react-icons/fa";
 import { MdOutlineEdit } from "react-icons/md";
 
+function TodoList() {
+    const [inputValue, setInputValue] = useState("");
+    const [task, setTask] = useState([]); 
+    const [editIndex, setEditIndex] = useState(null); 
+    const [editValue, setEditValue] = useState(""); 
+    const [error, setError] = useState(""); 
+
+    
+    useEffect(() => {
+        fetchTodos();
+    }, []);
 
 
+    const fetchTodos = async () => {
+        try {
+            const response = await fetch("http://localhost:3000/todos");
+            const data = await response.json();
+            setTask(data);
+        } catch (error) {
+            console.log("Erreur lors du chargement :", error);
+        }
+    };
 
-function TodoList () {
-
-    const [inputValue, setInputValue] = useState('')
-
+    
     const addTask = (e) => {
         setInputValue(e.target.value);
     };
 
-
-    const [task,setTask] = useState ([])
-
-
-    const handleClick = (e) => {
+    
+    const handleClick = async (e) => {
         e.preventDefault();
-        if(inputValue.trim() === "") {
-        setTask((prev) => [...prev, 
-            {Error: "le champ est vide, veuillez rentrer un élément"},
-        ]); 
-        
-    } else {
-        setTask((prev) => [...prev, { text:inputValue}]);
-    }
-        
-        setInputValue('');
 
-            }
+        if (inputValue.trim() === "") {
+            setError("Le champ est vide, veuillez rentrer un élément");
+            return;
+        }
 
-    const [editIndex, setEditIndex] = useState(null);
-    const [editValue, setEditValue] = useState ('');
-        
+        setError(""); 
 
+        try {
+            const response = await fetch("http://localhost:3000/todos", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: inputValue }),
+            });
 
-
+            const newTask = await response.json();
+            setTask((prev) => [...prev, newTask]); 
+            setInputValue(""); 
+        } catch (error) {
+            console.log("Erreur lors de l'ajout :", error);
+        }
+    };
 
     
     const deleteTask = async (id) => {
-        await fetch (`http://localhost:3000/todos/${id}`, {
-            method: "DELETE",
-        });
-            setTask((task) => task.filter((item) => item.id !== id));
+        try {
+            await fetch(`http://localhost:3000/todos/${id}`, {
+                method: "DELETE",
+            });
+
+            setTask((prev) => prev.filter((item) => item.id !== id));
+        } catch (error) {
+            console.log("Erreur lors de la suppression :", error);
+        }
+    };
+
     
-};
-
-
-
-
-
-    const inputEdit = (indexEdit) => {
-        setEditIndex(indexEdit);
-        setEditValue(task[indexEdit].text) 
-    }; 
-
-
-
+    const inputEdit = (id) => {
+        const taskToEdit = task.find((item) => item.id === id);
+        setEditIndex(id);
+        setEditValue(taskToEdit.text);
+    };
 
     
     const saveEdit = async () => {
-        const updatedTask = {text: editValue};
+        try {
+            const updatedTask = { text: editValue };
 
-        await fetch(`http://localhost:3000/todos/${editIndex}`, {
-            method: "PUT",
-            headers: {"content-type": "application/json"},
-            body: json.stringify(updatedTask),
+            const response = await fetch(`http://localhost:3000/todos/${editIndex}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updatedTask),
+            });
 
-        });
+            const editedTask = await response.json();
 
-    //     setTask(task => task.map((item,index) => 
-    //     index === editIndex ? {text: editValue}: item
-    // ));
+            setTask((prev) =>
+                prev.map((item) => (item.id === editIndex ? editedTask : item))
+            );
 
-    setEditValue(null);
-    setEditIndex('');
-
-    }
-
-
-
-
-
-
-
-
-
-
-
+            setEditValue(""); 
+            setEditIndex(null); 
+        } catch (error) {
+            console.log("Erreur lors de la modification :", error);
+        }
+    };
 
     return (
         <>
 
-        <div className="champ">
-            <input
-                type="text"
-                placeholder="Add a task"
-                onChange={addTask}
-                value={inputValue}
-        />
-        <button type="button" onClick={handleClick} className="btn">
-            ADD
-        </button>
-        </div>
-
-        {/* Liste des tâches */}
-        <ul className="list" style={{ listStyle: "none" }}>
-        {task.map((item, index) => (
-            <li
-            key={index}
-            style={{ color: item.error ? "red" : "black" }}
-            >
-
-              {/* Mode édition */}
-            {editIndex === index ? (
-            <>
+            <div className="champ">
                 <input
                     type="text"
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    className="input"
+                    placeholder="Add a task"
+                    onChange={addTask}
+                    value={inputValue}
                 />
-                <button onClick={saveEdit}>Enregistrer</button>
-                </>
-            ) : (
+                <button type="button" onClick={handleClick} className="btn">
+                    ADD
+                </button>
+            </div>
 
-                <div className="image">
-                  {/* Affichage normal */}
-                {item.error || item.text}
-                <button onClick={() => inputEdit(index)}><MdOutlineEdit /></button>
-                <button onClick={() => deleteTask(index)}> <FaTrashAlt /> </button>
-                
-                </div>
-                )}
+            
+            {error && <p style={{ color: "red" }}>{error}</p>}
+
+            
+            <ul className="list" style={{ listStyle: "none" }}>
+                {task.map((item) => (
+                    <li
+                        key={item.id}
+                        style={{ color: item.error ? "red" : "black" }}
+                    >
+                        
+                        {editIndex === item.id ? (
+                            <>
+                                <input
+                                    type="text"
+                                    value={editValue}
+                                    onChange={(e) =>
+                                        setEditValue(e.target.value)
+                                    }
+                                    className="input"
+                                />
+                                <button onClick={saveEdit}>Save</button>
+                            </>
+                        ) : (
+                            <>
+                            
+                                {item.text}
+                                <button
+                                    onClick={() => inputEdit(item.id)}
+                                    title="Modifier"
+                                >
+                                    <MdOutlineEdit />
+                                </button>
+                                <button
+                                    onClick={() => deleteTask(item.id)}
+                                    title="Supprimer"
+                                >
+                                    <FaTrashAlt />
+                                </button>
+                            </>
+                        )}
                     </li>
                 ))}
             </ul>
         </>
     );
 }
-
-
-
-
 
 export default TodoList;
