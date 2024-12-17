@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Home from "./Home";
 import Habits from "./habits";
-import TodoList from "./todoList";
+import TodoList from "./TodoList";
 import Expenses from "./expenses";
 import Sport from "./sport";
 import Goals from "./Goals";
