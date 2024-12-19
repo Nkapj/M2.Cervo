@@ -3,6 +3,7 @@ import { FaTrashAlt } from "react-icons/fa";
 import { MdOutlineEdit } from "react-icons/md";
 
 function TodoList() {
+
     const [inputValue, setInputValue] = useState("");
     const [task, setTask] = useState([]); 
     const [editIndex, setEditIndex] = useState(null); 
@@ -42,7 +43,7 @@ function TodoList() {
         setError(""); 
 
         try {
-            const response = await fetch("http://localhost:3000/todos", {
+            const response = await fetch(`http://localhost:3000/todos`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ text: inputValue }),
@@ -102,7 +103,7 @@ function TodoList() {
 
     return (
         <>
-
+            
             <div className="champ">
                 <input
                     type="text"
@@ -140,7 +141,7 @@ function TodoList() {
                             </>
                         ) : (
                             <>
-                            
+                                
                                 {item.text}
                                 <button
                                     onClick={() => inputEdit(item.id)}
@@ -149,7 +150,7 @@ function TodoList() {
                                     <MdOutlineEdit />
                                 </button>
                                 <button
-                                    onClick={() => deleteTask(item.id)}
+                                    onClick={() => deleteTask(item.id)} 
                                     title="Supprimer"
                                 >
                                     <FaTrashAlt />
